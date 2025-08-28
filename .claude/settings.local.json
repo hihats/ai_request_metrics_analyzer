@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init:*)",
+      "Bash(docker build:*)",
+      "Bash(direnv allow:*)",
+      "Bash(docker run:*)"
+    ],
+    "deny": []
+  }
+}
