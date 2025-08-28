@@ -126,7 +126,7 @@ docker build -t ai-metrics-analyzer .
 docker run -v /path/to/data:/app ai-metrics-analyzer extract_copilot_acceptance_rate.py copilot_metrics.json
 
 # Cursor メトリクス取得（環境変数でAPIキー指定）
-source .envrc && docker run -e CURSOR_API_KEY=$CURSOR_API_KEY -v $(pwd):/app metrics_analyzer extract_cursor_metrics.py --days 30 --output outputs/cursor_metrics_$(date +%Y%m%d).json
+source .envrc && docker run -e CURSOR_API_KEY=$CURSOR_API_KEY -v $(pwd):/app ai-metrics-analyzer extract_cursor_metrics.py --days 30 --output outputs/cursor_metrics_$(date +%Y%m%d).json
 ```
 
 ## 📁 プロジェクト構造
