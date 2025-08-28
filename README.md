@@ -1,180 +1,243 @@
-# Cursor AI Code Editor 企業導入ドキュメント一式
+# AI Code Editor メトリクス分析ツール
 
-本リポジトリは、会社でCursor AI Code Editorを安全に導入・配布するための包括的なドキュメント集です。
+GitHub CopilotとCursor Admin APIのメトリクスデータを分析し、AI コード補完の採用率や使用統計を取得・分析するためのPythonツール集です。
 
-## 📋 ドキュメント構成
+## 📋 概要
 
-### 1. [Cursor企業導入ガイドライン.md](./Cursor企業導入ガイドライン.md)
-**対象：** IT管理者、セキュリティ担当者、管理職  
-**用途：** 企業導入時の包括的なガイドライン
+このプロジェクトには以下のツールが含まれています：
 
-- セキュリティ要件の詳細
-- ライセンス・料金体系
-- 使用制限・禁止事項
-- データ管理方針
-- 技術要件
-- サポート体制
-- コンプライアンス要件
+1. **GitHub Copilot メトリクス分析** - GitHub Copilotの使用データから採用率を計算
+2. **Cursor Admin API メトリクス取得** - Cursor Admin APIからチーム使用統計を取得
+3. **設定管理** - API認証情報とツール設定の管理
 
-### 2. [Cursor導入チェックリスト.md](./Cursor導入チェックリスト.md)
-**対象：** 全社員（Cursor使用予定者）  
-**用途：** 導入前の必須確認事項
+## 🚀 クイックスタート
 
-- セキュリティチェック項目
-- 申請・承認状況確認
-- 技術要件確認
-- 使用制限の理解確認
-- 緊急時連絡先
+### 前提条件
 
-### 3. [Cursorセキュリティポリシー同意書.md](./Cursorセキュリティポリシー同意書.md)
-**対象：** 全社員（Cursor使用予定者）  
-**用途：** 正式な同意書・契約書
+- Python 3.8以上
+- pip（Pythonパッケージマネージャー）
+- Docker（オプション）
 
-- セキュリティポリシーへの同意
-- 使用制限の確認
-- インシデント対応の理解
-- 署名・承認欄
+### インストール
 
----
+```bash
+# リポジトリをクローン
+git clone <repository-url>
+cd copilot
 
-## 🚀 導入フロー
-
-### Step 1: 事前準備（IT部門・管理職）
-1. **ガイドライン確認**
-   - `Cursor企業導入ガイドライン.md` を熟読
-   - セキュリティ要件の理解
-   - 社内ポリシーとの整合性確認
-
-2. **環境整備**
-   - ネットワーク設定
-   - ライセンス体系の決定
-   - サポート体制の構築
-
-### Step 2: 社員申請・承認
-1. **申請プロセス**
-   ```
-   社員申請 → 部署長承認 → IT部門審査 → セキュリティ部門確認
-   ```
-
-2. **研修受講**
-   - セキュリティ研修（必須）
-   - AIツール使用ガイドライン研修
-
-### Step 3: 導入実施
-1. **事前確認**
-   - `Cursor導入チェックリスト.md` での確認
-   - 技術要件の満足
-
-2. **同意書署名**
-   - `Cursorセキュリティポリシー同意書.md` への署名
-   - 関係者による承認
-
-3. **インストール・設定**
-   - Cursorのインストール
-   - セキュリティ設定の実施
-   - 動作確認
-
----
-
-## ⚠️ 重要な注意事項
-
-### 必須要件
-- [ ] 3つの文書すべてを確認済み
-- [ ] セキュリティ研修を受講済み
-- [ ] 同意書への署名完了
-- [ ] 必要な承認をすべて取得済み
-
-### 禁止事項（要再確認）
-```text
-🚫 機密情報を含むプロジェクトでの使用
-🚫 個人情報・顧客データの処理
-🚫 認証情報（APIキー等）を含むコード
-🚫 本番環境での直接使用
-🚫 セキュリティ設定の無効化
+# 依存関係をインストール
+pip install -r requirements.txt
 ```
 
----
+## 🛠️ ツール詳細
 
-## 🔧 カスタマイズ方法
+### 1. GitHub Copilot メトリクス分析
 
-### 1. 会社固有の設定
-各ドキュメントの以下の部分を自社に合わせて修正してください：
+GitHub Copilotの使用メトリクスJSONファイルを解析し、採用率統計を生成します。
 
-```text
-- 会社名：「株式会社○○」
-- 連絡先：各部門のメールアドレス
-- ネットワーク設定：自社のプロキシ・ファイアウォール設定
-- データ分類：自社の情報分類体系
-- 承認フロー：自社の承認プロセス
+#### 使用方法
+
+```bash
+# デフォルトファイル（~/Downloads/copilot_metrics.json）を使用
+python extract_copilot_acceptance_rate.py
+
+# 特定のファイルを指定
+python extract_copilot_acceptance_rate.py path/to/copilot_metrics.json
+
+# ヘルプを表示
+python extract_copilot_acceptance_rate.py --help
 ```
 
-### 2. 追加検討事項
-- **業界特有の規制**（金融、医療等）
-- **地域固有の法規制**（GDPR、個人情報保護法等）
-- **企業固有のセキュリティ要件**
+#### 出力内容
 
----
+- 📊 **全体統計**: 総採用率、提案数、採用数
+- 🗓️ **日別統計**: 日付ごとの詳細な採用率データ
+- 💻 **言語別統計**: プログラミング言語ごとの採用率
+- 🖥️ **エディタ別統計**: 使用エディタごとの採用率
 
-## 📞 サポート・問い合わせ
+### 2. Cursor Admin API メトリクス取得
 
-### 技術的な問題
-- **IT部門：** it-support@company.com
+Cursor Admin APIを使用してチームの使用メトリクス、支出データ、メンバー情報を取得します。
 
-### セキュリティ関連
-- **セキュリティ部門：** security@company.com
+#### 設定
 
-### ライセンス・法務
-- **法務部門：** legal@company.com
+```bash
+# 環境変数でAPIキーを設定
+export CURSOR_API_KEY=your-api-key-here
 
-### 緊急時
-- **緊急連絡先：** emergency@company.com
-- **対応：** 即座にCursor使用を停止し、報告
+# または設定ファイルを作成
+python config.py --setup
+```
 
----
+#### 使用方法
 
-## 📊 運用・監査
+```bash
+# 過去7日間のメトリクスを取得
+python extract_cursor_metrics.py
 
-### 定期確認事項
-- [ ] 月次使用状況レポート
-- [ ] セキュリティ設定の確認
-- [ ] ライセンス使用状況の監査
-- [ ] インシデント発生状況の確認
+# 特定の期間を指定
+python extract_cursor_metrics.py --start-date 2024-01-01 --end-date 2024-01-31
 
-### 年次見直し
-- [ ] ガイドラインの更新
-- [ ] セキュリティ要件の見直し
-- [ ] 研修内容の更新
-- [ ] 技術要件の見直し
+# 結果をJSONファイルに出力
+python extract_cursor_metrics.py --output cursor_metrics_$(date +%Y%m%d).json
 
----
+# 支出データも含めて取得
+python extract_cursor_metrics.py --include-spending
 
-## 📝 更新履歴
+# 取得日数を指定
+python extract_cursor_metrics.py --days 30
+```
 
-| 日付 | 版数 | 変更内容 | 担当者 |
-|------|------|----------|--------|
-| 2025/01 | v1.0 | 初版作成（3文書一式） | IT部門 |
+#### 出力内容
 
----
+- 👥 **チーム情報**: メンバー数と詳細
+- 📈 **使用統計**: コード行数、AI提案採用率
+- 👤 **ユーザー別統計**: 個人ごとの詳細な使用データ
+- 📁 **拡張子別統計**: ファイル形式ごとの使用パターン
+- 💰 **支出データ**: チーム使用料金（オプション）
+
+### 3. 設定管理
+
+API認証情報やツール設定を管理します。
+
+```bash
+# インタラクティブ設定
+python config.py --setup
+
+# サンプル設定ファイル作成
+python config.py --sample
+
+# 現在の設定を表示
+python config.py --show
+```
+
+## 🐳 Docker使用
+
+### イメージのビルド
+
+```bash
+docker build -t ai-metrics-analyzer .
+```
+
+### 実行
+
+```bash
+# GitHub Copilotメトリクス分析
+docker run -v /path/to/data:/app ai-metrics-analyzer extract_copilot_acceptance_rate.py copilot_metrics.json
+
+# Cursor メトリクス取得（環境変数でAPIキー指定）
+source .envrc && docker run -e CURSOR_API_KEY=$CURSOR_API_KEY -v $(pwd):/app metrics_analyzer extract_cursor_metrics.py --days 30 --output outputs/cursor_metrics_$(date +%Y%m%d).json
+```
+
+## 📁 プロジェクト構造
+
+```
+copilot/
+├── extract_copilot_acceptance_rate.py  # GitHub Copilot分析メイン
+├── extract_cursor_metrics.py           # Cursor Admin API取得メイン
+├── config.py                          # 設定管理
+├── requirements.txt                   # Python依存関係
+├── Dockerfile                         # Docker設定
+├── .gitignore                        # Git除外設定
+├── outputs/                          # 出力ファイル格納
+└── README.md                         # このファイル
+```
+
+## 📊 データ形式
+
+### GitHub Copilot メトリクス
+
+期待されるJSON構造：
+```json
+[
+  {
+    "date": "2024-01-01",
+    "copilot_ide_code_completions": {
+      "editors": [
+        {
+          "name": "vscode",
+          "models": [
+            {
+              "languages": [
+                {
+                  "name": "python",
+                  "total_code_suggestions": 100,
+                  "total_code_acceptances": 75
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+]
+```
+
+### Cursor Admin API
+
+APIから自動取得される形式：
+- 日次使用データ（行数、AI提案、リクエストタイプ等）
+- チームメンバー情報
+- 支出データ（オプション）
+
+## 🔧 設定オプション
+
+### 環境変数
+
+- `CURSOR_API_KEY`: Cursor Admin API キー
+- `CURSOR_BASE_URL`: APIベースURL（デフォルト: https://api.cursor.com）
+- `CURSOR_DEFAULT_DAYS`: デフォルト取得日数（デフォルト: 7）
+- `CURSOR_OUTPUT_FORMAT`: 出力形式（console/json/csv）
+
+### 設定ファイル
+
+`~/.cursor-config.json` に設定を保存可能：
+```json
+{
+  "api_key": "your-cursor-admin-api-key-here",
+  "base_url": "https://api.cursor.com",
+  "default_days": 7,
+  "output_format": "console"
+}
+```
+
+## 📋 要件
+
+### Python依存関係
+
+- `pandas>=2.0.3` - データ分析とテーブル表示
+- `requests>=2.31.0` - HTTP APIリクエスト
+- `matplotlib>=3.7.2` - グラフ作成（将来の機能用）
+- `numpy>=1.24.3` - 数値計算
+
+## 🚨 注意事項
+
+- **APIキーの管理**: APIキーは環境変数または設定ファイルで安全に管理してください
+- **データプライバシー**: メトリクスデータには個人情報が含まれる場合があります
+- **API制限**: Cursor Admin APIには90日間の取得制限があります
+- **出力言語**: ユーザー向け出力は日本語で表示されます
+
+## 🤝 貢献
+
+プロジェクトへの貢献を歓迎します：
+
+1. このリポジトリをフォーク
+2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
+3. 変更をコミット (`git commit -m 'Add amazing feature'`)
+4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
+5. プルリクエストを作成
 
 ## 📄 ライセンス
 
-本ドキュメント集は社内利用を目的として作成されています。外部への配布・転用は禁止されています。
+このプロジェクトのライセンス情報については、LICENSEファイルを参照してください。
 
----
+## 🔗 参考資料
 
-## ✅ 導入完了確認
+- [GitHub Copilot API Documentation](https://docs.github.com/en/copilot)
+- [Cursor Admin API Documentation](https://docs.cursor.com/en/account/teams/admin-api)
+- [Docker Documentation](https://docs.docker.com/)
 
-以下がすべて完了したら、Cursorの使用を開始できます：
+## 📞 サポート
 
-- [ ] 3つのドキュメントをすべて確認
-- [ ] チェックリストの全項目をクリア
-- [ ] 同意書への署名・承認完了
-- [ ] セキュリティ設定の実施完了
-- [ ] 緊急時連絡先の把握完了
-
-**Cursor導入担当者署名：** ________________  
-**最終確認日：** ________________
-
----
-
-**📧 このドキュメント集に関する質問・改善提案は IT部門 (it-support@company.com) まで**
+問題や質問がある場合は、GitHubのIssuesページで報告してください。
