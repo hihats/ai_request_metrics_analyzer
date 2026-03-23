@@ -66,3 +66,7 @@ secrets.json
 
 # Output files that might contain sensitive data
 outputs/*.json
+
+# claude local setting
+.claude/settings.local.json
+
