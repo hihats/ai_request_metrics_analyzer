@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init:*)",
+      "Bash(docker build:*)",
+      "Bash(direnv allow:*)",
+      "Bash(docker run:*)",
+      "Bash(cat:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.github.com)",
+      "Bash(open:*)",
+      "Bash(gh auth status 2>&1)"
+    ]
+  }
+}
