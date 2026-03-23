@@ -33,15 +33,25 @@ pip install -r requirements.txt
 
 ### 1. GitHub Copilot メトリクス分析
 
-GitHub Copilotの使用メトリクスJSONファイルを解析し、採用率統計を生成します。
+GitHub Copilotの使用メトリクスを取得・解析し、採用率統計を生成します。
+新しい Copilot Usage Metrics API（2026年2月GA）と、レガシーAPIで取得済みのローカルJSONファイルの両方に対応しています。
 
 #### 使用方法
 
 ```bash
-# デフォルトファイル（~/Downloads/copilot_metrics.json）を使用
-python extract_copilot_acceptance_rate.py
+# GitHub APIから28日間レポートを取得・分析
+python extract_copilot_acceptance_rate.py --api --report-type 28-day
 
-# 特定のファイルを指定
+# GitHub APIから特定日のレポートを取得・分析
+python extract_copilot_acceptance_rate.py --api --report-type 1-day --day 2026-03-01
+
+# レポートデータをファイルに保存しつつ分析
+python extract_copilot_acceptance_rate.py --api --report-type 28-day --output outputs/report.json
+
+# Organization名を指定
+python extract_copilot_acceptance_rate.py --api --org your-org-name
+
+# ローカルJSONファイルを指定（レガシー・新形式どちらも自動判別）
 python extract_copilot_acceptance_rate.py path/to/copilot_metrics.json
 
 # ヘルプを表示
@@ -122,11 +132,17 @@ docker build -t ai-metrics-analyzer .
 ### 実行
 
 ```bash
-# GitHub Copilotメトリクス分析
-docker run -v /path/to/data:/app ai-metrics-analyzer extract_copilot_acceptance_rate.py copilot_metrics.json
+# GitHub Copilot: APIから28日間レポートを取得・分析
+docker run --rm -e GH_TOKEN=$(gh auth token) -v $(pwd):/app ai-metrics-analyzer \
+  extract_copilot_acceptance_rate.py --api --report-type 28-day --output outputs/copilot_metrics.json
+
+# GitHub Copilot: ローカルJSONファイルを分析
+docker run --rm -v $(pwd):/app ai-metrics-analyzer \
+  extract_copilot_acceptance_rate.py path/to/copilot_metrics.json
 
 # Cursor メトリクス取得（環境変数でAPIキー指定）
-source .envrc && docker run -e CURSOR_API_KEY=$CURSOR_API_KEY -v $(pwd):/app ai-metrics-analyzer extract_cursor_metrics.py --days 30 --output outputs/cursor_metrics_$(date +%Y%m%d).json
+source .envrc && docker run --rm -e CURSOR_API_KEY=$CURSOR_API_KEY -v $(pwd):/app ai-metrics-analyzer \
+  extract_cursor_metrics.py --days 30 --output outputs/cursor_metrics_$(date +%Y%m%d).json
 ```
 
 ## 📁 プロジェクト構造
@@ -147,7 +163,24 @@ copilot/
 
 ### GitHub Copilot メトリクス
 
-期待されるJSON構造：
+新API（Copilot Usage Metrics API）と レガシーAPIの両形式を自動判別して処理します。
+
+**新API形式**（`--api` で取得、またはローカルファイル）：
+```json
+{
+  "day": "2026-03-01",
+  "code_generation_activity_count": 110,
+  "code_acceptance_activity_count": 10,
+  "totals_by_ide": [
+    {"ide": "vscode", "code_generation_activity_count": 78, "code_acceptance_activity_count": 6}
+  ],
+  "totals_by_language_feature": [
+    {"language": "typescript", "feature": "code_completion", "code_generation_activity_count": 53, "code_acceptance_activity_count": 3}
+  ]
+}
+```
+
+**レガシーAPI形式**（既存のローカルJSONファイル）：
 ```json
 [
   {
@@ -159,11 +192,7 @@ copilot/
           "models": [
             {
               "languages": [
-                {
-                  "name": "python",
-                  "total_code_suggestions": 100,
-                  "total_code_acceptances": 75
-                }
+                {"name": "python", "total_code_suggestions": 100, "total_code_acceptances": 75}
               ]
             }
           ]
@@ -185,6 +214,7 @@ APIから自動取得される形式：
 
 ### 環境変数
 
+- `GH_TOKEN` / `GITHUB_ACCESS_TOKEN`: GitHub APIトークン（Copilotメトリクス取得に必要、`admin:org` スコープ）
 - `CURSOR_API_KEY`: Cursor Admin API キー
 - `CURSOR_BASE_URL`: APIベースURL（デフォルト: https://api.cursor.com）
 - `CURSOR_DEFAULT_DAYS`: デフォルト取得日数（デフォルト: 7）
@@ -234,7 +264,8 @@ APIから自動取得される形式：
 
 ## 🔗 参考資料
 
-- [GitHub Copilot API Documentation](https://docs.github.com/en/copilot)
+- [GitHub Copilot Usage Metrics API](https://docs.github.com/en/rest/copilot/copilot-usage-metrics)
+- [Copilot Usage Metrics リファレンス](https://docs.github.com/en/copilot/reference/copilot-usage-metrics)
 - [Cursor Admin API Documentation](https://docs.cursor.com/en/account/teams/admin-api)
 - [Docker Documentation](https://docs.docker.com/)
 
