@@ -31,4 +31,4 @@ COPY *.py .
 
 # デフォルトコマンド（エントリーポイントを上書き可能にする）
 ENTRYPOINT ["python"]
-CMD ["extract_acceptance_rate.py", "--help"]
+CMD ["--help"]
