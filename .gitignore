@@ -70,3 +70,4 @@ outputs/*.json
 # claude local setting
 .claude/settings.local.json
 
+cursor_raw_data/
