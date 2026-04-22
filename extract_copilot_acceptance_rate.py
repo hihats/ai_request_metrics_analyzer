@@ -66,8 +66,69 @@ def fetch_from_api(org, report_type, day=None):
     return parse_ndjson_or_json(report_data)
 
 
+def fetch_date_range(org, start_date, end_date):
+    """Fetch metrics for a date range using the 1-day API endpoint.
+
+    Loops through each day from start_date to end_date, calling the 1-day
+    endpoint individually. Individual day failures are skipped gracefully.
+    """
+    token = get_github_token()
+    base_url = 'https://api.github.com'
+    start = datetime.strptime(start_date, '%Y-%m-%d')
+    end = datetime.strptime(end_date, '%Y-%m-%d')
+    total_days = (end - start).days + 1
+    all_days = []
+
+    print(f"{start_date} 〜 {end_date} ({total_days}日分) のメトリクスを取得中...")
+
+    for i in range(total_days):
+        target_date = start + timedelta(days=i)
+        day_str = target_date.strftime('%Y-%m-%d')
+        url = f'{base_url}/orgs/{org}/copilot/metrics/reports/organization-1-day?day={day_str}'
+
+        req = urllib.request.Request(url, headers={
+            'Accept': 'application/vnd.github+json',
+            'Authorization': f'Bearer {token}',
+            'X-GitHub-Api-Version': '2022-11-28'
+        })
+
+        try:
+            resp = urllib.request.urlopen(req)
+        except urllib.error.HTTPError as e:
+            print(f"  {day_str}: スキップ (HTTP {e.code})")
+            continue
+
+        api_response = json.loads(resp.read().decode('utf-8'))
+        download_links = api_response.get('download_links', [])
+        if not download_links:
+            print(f"  {day_str}: スキップ (ダウンロードリンクなし)")
+            continue
+
+        report_data = urllib.request.urlopen(download_links[0]).read().decode('utf-8')
+        day_data = parse_ndjson_or_json(report_data)
+        day_records = normalize_new_api_data(day_data)
+        all_days.extend(day_records)
+        print(f"  {day_str}: 取得完了 ({len(day_records)}件)")
+
+    if not all_days:
+        print("エラー: 取得できたデータがありません。")
+        sys.exit(1)
+
+    return all_days
+
+
 def parse_ndjson_or_json(text):
-    """Parse NDJSON (newline-delimited JSON) or regular JSON."""
+    """Parse NDJSON (newline-delimited JSON) or regular JSON.
+
+    Note on the new Copilot Usage Metrics API (2026-02 GA) NDJSON adoption:
+    The API returns download_links (signed URLs) to pre-generated NDJSON files,
+    not an inline NDJSON HTTP response (application/x-ndjson with chunked
+    transfer encoding). This means the streaming benefits of NDJSON — where
+    server sends and client processes records incrementally — are not utilized.
+    The actual benefit is limited to client-side memory efficiency when parsing
+    large files line-by-line instead of loading entire JSON into memory.
+    See: https://docs.github.com/en/rest/copilot/copilot-usage-metrics
+    """
     try:
         return json.loads(text)
     except json.JSONDecodeError:
@@ -268,6 +329,7 @@ def format_date(date_str):
 
 def print_results(results):
     """Print the results in a formatted way."""
+    results = sorted(results, key=lambda x: x['date'])
     print("\n組織のGitHub Copilot Acceptance Rate:")
     print("=" * 60)
 
@@ -361,12 +423,43 @@ def main():
                         help='レポートタイプ (デフォルト: 28-day)')
     parser.add_argument('--day', default=None,
                         help='1-dayレポートの日付 (YYYY-MM-DD形式)')
+    parser.add_argument('--start-date', default=None,
+                        help='取得開始日 (YYYY-MM-DD形式)')
+    parser.add_argument('--end-date', default=None,
+                        help='取得終了日 (YYYY-MM-DD形式、省略時: 2日前)')
+    parser.add_argument('--days', type=int, default=None,
+                        help='取得日数 (--end-dateからN日前を--start-dateとする簡易指定)')
     parser.add_argument('--output', default=None,
                         help='レポートデータの保存先ファイルパス')
 
     args = parser.parse_args()
 
-    if args.api:
+    # --start-date / --days が指定されていれば --api を暗黙的に有効化
+    use_date_range = args.start_date or args.days
+    if use_date_range:
+        args.api = True
+
+    if args.api and use_date_range:
+        # 期間指定: end_date を確定（省略時は2日前、APIの反映ラグを考慮）
+        if args.end_date:
+            end_date = args.end_date
+        else:
+            end_date = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')
+
+        # start_date を確定（--start-date 優先、なければ --days から算出）
+        if args.start_date:
+            start_date = args.start_date
+        else:
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+            start_date = (end_dt - timedelta(days=args.days - 1)).strftime('%Y-%m-%d')
+
+        metrics_data = fetch_date_range(args.org, start_date, end_date)
+        if args.output:
+            with open(args.output, 'w') as f:
+                json.dump(metrics_data, f, ensure_ascii=False, indent=2)
+            print(f"レポートデータを保存しました: {args.output}")
+        results = calculate_acceptance_rate_new(metrics_data)
+    elif args.api:
         raw_data = fetch_from_api(args.org, args.report_type, args.day)
         if args.output:
             with open(args.output, 'w') as f:
